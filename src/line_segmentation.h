@@ -13,11 +13,11 @@ public:
     void clear();
     bool empty() const;
 
-    const pixel& last_pixel() const;
+    pixel last_pixel() const;
 
     void add(pixel p);
     void add(contour other);
-    void add_segment(const pixel& a, const pixel& b);
+    void add_segment(pixel a, pixel b);
     // move all the pixels from the contour to the set
     void move_to(std::unordered_set<pixel, pixel::hash>& paths);
 
@@ -79,7 +79,7 @@ public:
     // get index of the nearest line from the row that belongs to some rectangle
     int get_nearest_line(const std::vector<rectangle>& rectangles, int row) const;
     // get the nearest empty row from the pixel that belongs to some rectangle
-    int get_nearest_empty_line(const std::vector<rectangle>& rectangles, const pixel& p, Direction dir) const;
+    int get_nearest_empty_line(const std::vector<rectangle>& rectangles, pixel p, Direction dir) const;
 
     std::vector<line>& lines();
     const std::vector<line>& lines() const;
@@ -92,7 +92,7 @@ public:
     // check if line is used
     bool used(int line_index) const;
 
-    bool in_range(const pixel& p) const;
+    bool in_range(pixel p) const;
     int left() const;
     int right() const;
     int width() const;
@@ -198,7 +198,7 @@ private:
 
     // add and remove black rectangles from the strips
     void filter_strips();
-    bool should_be_deleted(int strip_index, const strip::rectangle& r) const;
+    bool should_be_deleted(size_t strip_index, const strip::rectangle& r) const;
     void delete_black_rectangles();
     bool should_be_added(size_t strip_index, size_t rectangle_index) const;
     void add_black_rectangles();
@@ -217,29 +217,29 @@ private:
 
     // strip that has the most strip lines
     strip& get_core_strip();
-    // get strip that constains the given column
+    // get a strip that contains the given column
     strip& get_strip(int col);
 
     // methods used for creating the candidate path
-    void continue_path(const pixel& last_pixel, Direction dir);
+    void continue_path(pixel last_pixel, Direction dir);
     std::vector<strip::rectangle> get_rectangles_of_interest(
         const strip& last_strip,
         const strip::rectangle& last_rectangle,
         const strip& next_strip,
         const strip::rectangle& next_rectangle) const;
-    pixel connect_with_existing_line(const pixel& last_pixel, Direction dir);
-    pixel continue_with_strait_line(const pixel& last_pixel, Direction dir);
+    pixel connect_with_existing_line(pixel last_pixel, Direction dir);
+    pixel continue_with_strait_line(pixel last_pixel, Direction dir);
     pixel try_to_connect(
         const strip& last_strip,
-        const pixel& last_pixel,
+        pixel last_pixel,
         const strip& next_strip,
-        const pixel& next_pixel,
+        pixel next_pixel,
         int next_row,
         Direction dir);
-    pixel go_around_and_cut(const pixel& last_pixel, Direction dir);
-    pixel go_around_and_cut_helper(pixel& current_pixel, Direction dir);
-    bool bfs_go_around(const pixel& p, const std::unordered_set<pixel, pixel::hash>& candidates, Direction dir);
-    std::pair<borders, std::unordered_set<pixel, pixel::hash>> bfs_get_box_and_candidates(const pixel& p, Direction dir) const;
+    pixel go_around_and_cut(pixel last_pixel, Direction dir);
+    pixel go_around_and_cut_helper(pixel current_pixel, Direction dir);
+    bool bfs_go_around(pixel p, const std::unordered_set<pixel, pixel::hash>& candidates, Direction dir);
+    std::pair<borders, std::unordered_set<pixel, pixel::hash>> bfs_get_box_and_candidates(pixel p, Direction dir) const;
 
 private:
     std::vector<strip> m_strips;

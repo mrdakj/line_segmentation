@@ -2,8 +2,11 @@
 Line segmentation algorithm.
 
 ![Alt text](out/5.png?raw=true "Example 1")
+
 ![Alt text](out/7.png?raw=true "Example 2")
+
 ![Alt text](out/25.png?raw=true "Example 3")
+
 ![Alt text](out/42.png?raw=true "Example 4")
 
 ***
@@ -22,14 +25,25 @@ Line segmentation algorithm.
 
     ```sh
     cd line_segmentation
-	make
+    mkdir build
+    cd build
+    cmake ..
+    cmake --build .
 
     ```
 
 3. Start
 
     ```sh
-	./main path_fo_image_or_dir
+	./main path_to_image_or_dir
+
+    ```
+
+4. Example
+
+    ```sh
+	./main ../images
+	./main ../images/7.png
 
     ```
 

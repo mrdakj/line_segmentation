@@ -38,6 +38,10 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    if (!fs::exists("out")) {
+        fs::create_directory("out");
+    }
+
     fs::path p(argv[1]);
     if (fs::is_directory(p)) {
         for (auto it = fs::directory_iterator(p); it != fs::directory_iterator(); ++it) {
