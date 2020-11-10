@@ -518,13 +518,13 @@ bool strips::create_strips(int strip_width)
 image strips::concatenate_strips() const
 {
     return std::accumulate(m_strips.begin(), m_strips.end(), image(m_image.rows(), 0), 
-            [](image r, const auto& s) { return std::move(r) + s.img(); });
+            [](image r, const auto& s) { return r + s.img(); });
 }
 
 image strips::concatenate_strips_with_lines(bool original) const
 {
     return std::accumulate(m_strips.begin(), m_strips.end(), image(m_image.rows(), 0), 
-            [&](image r, const auto& s) { return std::move(r) + s.image_with_lines(original); });
+            [&](image r, const auto& s) { return r + s.image_with_lines(original); });
 }
 
 strip& strips::get_core_strip()

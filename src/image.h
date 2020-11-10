@@ -190,8 +190,7 @@ public:
 
     void threshold(bool otsu = false);
 
-    image operator+(image other) const &;
-    image operator+(image other) &&;
+    image operator+(const image& other) const;
 private:
     cv::Mat m_data;
 };

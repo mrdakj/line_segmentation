@@ -264,18 +264,10 @@ void image::threshold(bool otsu)
     }
 }
 
-image image::operator+(image other) const &
+image image::operator+(const image& other) const
 {
     assert(rows() == other.rows());
     cv::Mat result;
-    cv::hconcat(m_data, std::move(other.m_data), result);
-    return image(std::move(result));
-}
-
-image image::operator+(image other) &&
-{
-    assert(rows() == other.rows());
-    cv::Mat result;
-    cv::hconcat(std::forward<cv::Mat>(m_data), std::move(other.m_data), result);
+    cv::hconcat(m_data, other.m_data, result);
     return image(std::move(result));
 }
