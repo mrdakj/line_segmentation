@@ -26,7 +26,7 @@ void process_image(const fs::path& img_name)
 
         result_image.save(std::string("./out/") + std::string(img_name.filename()));
     } 
-    catch (std::exception& ex) {
+    catch (const std::exception& ex) {
         std::cerr << ex.what() << std::endl;
     }
 }
