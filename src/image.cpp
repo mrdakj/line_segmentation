@@ -8,7 +8,7 @@ image::image(const fs::path& path)
 }
 
 image::image(int height, int width)
-    : m_data(cv::Mat(height, width, CV_8UC1, cv::Scalar((int)Color::white)))
+    : m_data(cv::Mat(height, width, CV_8UC1, cv::Scalar(static_cast<int>(Color::white))))
 {
 }
 
@@ -35,7 +35,7 @@ int image::cols() const
 void image::crop()
 {
     auto [h, w] = dim();
-    auto is_entry_black = [](const auto& x) { return x(0,0) == (int)Color::black; };
+    auto is_entry_black = [](const auto& x) { return x(0,0) == static_cast<unsigned char>(Color::black); };
 
     auto top_it = std::find_if(cvit::row_iterator(*this), cvit::row_iterator(), [&](const auto& row) {
         return std::any_of(cvit::column_iterator(row), cvit::column_iterator(), is_entry_black);
@@ -68,7 +68,7 @@ void image::crop()
 
 void image::add_border()
 {
-    cv::copyMakeBorder(m_data, m_data, 1, 1, 1, 1, cv::BORDER_CONSTANT, (int)Color::white);
+    cv::copyMakeBorder(m_data, m_data, 1, 1, 1, 1, cv::BORDER_CONSTANT, static_cast<int>(Color::white));
 }
 
 std::pair<int,int> image::dim() const
@@ -98,37 +98,57 @@ void image::save(const fs::path& path) const
     }
 }
 
-int image::operator()(int j, int i) const
-{
-    return m_data.at<unsigned char>(j,i);
-}
-
-int image::operator()(const pixel& p) const
-{
-    return m_data.at<unsigned char>(p.j,p.i);
-}
-
 unsigned char& image::operator()(int j, int i)
 {
     return m_data.at<unsigned char>(j,i);
 }
 
-unsigned char& image::operator()(const pixel& p)
+const unsigned char& image::operator()(int j, int i) const
+{
+    return m_data.at<unsigned char>(j,i);
+}
+
+unsigned char& image::operator()(pixel p)
 {
     return m_data.at<unsigned char>(p.j,p.i);
 }
 
-bool image::check_color(const pixel& p, Color color) const
+const unsigned char& image::operator()(pixel p) const
 {
-    return in_range(p) && (*this)(p.j, p.i) == (int)color;
+    return m_data.at<unsigned char>(p.j,p.i);
 }
 
-bool image::in_range(const pixel& p) const
+unsigned char& image::color_at(int j, int i)
+{
+    return (*this)(j,i);
+}
+
+const unsigned char& image::color_at(int j, int i) const
+{
+    return (*this)(j,i);
+}
+
+unsigned char& image::color_at(pixel p)
+{
+    return (*this)(p);
+}
+
+const unsigned char& image::color_at(pixel p) const
+{
+    return (*this)(p);
+}
+
+bool image::check_color(pixel p, Color color) const
+{
+    return in_range(p) && color_at(p) == static_cast<unsigned char>(color);
+}
+
+bool image::in_range(pixel p) const
 {
     return (p.j < m_data.rows && p.j >= 0 && p.i < m_data.cols && p.i >= 0);
 }
 
-borders image::bfs(const pixel& p, std::unordered_set<pixel, pixel::hash>& visited) const
+borders image::bfs(pixel p, std::unordered_set<pixel, pixel::hash>& visited) const
 {
     std::queue<pixel> q;
     q.push(p);
@@ -176,7 +196,7 @@ std::pair<int,int> image::get_component_avg_size_and_remove_noise()
                 if (visited.size() - visited_before < 3) {
                     for (int jb = b.top(); jb < b.bottom(); ++jb) {
                         for (int ib = b.left(); ib < b.right(); ++ib) {
-                            (*this)(jb, ib) = (int)Color::white;
+                            color_at(jb, ib) = static_cast<unsigned char>(Color::white);
                         }
                     }
                 }
@@ -210,26 +230,28 @@ void image::fill_row(int row, int value)
 void image::fill_row(int row, Color color)
 {
     auto row_it = cvit::row_iterator(*this, row);
-    std::for_each(cvit::column_iterator(*row_it), cvit::column_iterator(), [&](auto&& x) { x(0,0) = (int)color; });
+    std::for_each(cvit::column_iterator(*row_it), cvit::column_iterator(), [&](auto&& x) { x(0,0) = static_cast<unsigned char>(color); });
 }
 
 void image::fill(int top, int bottom, Color color)
 {
     std::for_each(cvit::row_iterator(*this, top), cvit::row_iterator(*this, bottom), [&](const auto& row) {
-        std::for_each(cvit::column_iterator(row), cvit::column_iterator(), [&](auto&& x) { x(0,0) = (int)color; });
+        std::for_each(cvit::column_iterator(row), cvit::column_iterator(), [&](auto&& x) { x(0,0) = static_cast<unsigned char>(color); });
     });
 }
 
 bool image::row_empty(int row, int start, int end) const
 {
     auto row_it = cvit::row_iterator(*this, row);
-    return std::none_of(cvit::column_iterator(*row_it, start), cvit::column_iterator(*row_it, end), [](const auto& x) { return x(0,0) == (int)Color::black; });
+    return std::none_of(cvit::column_iterator(*row_it, start), cvit::column_iterator(*row_it, end), 
+            [](const auto& x) { return x(0,0) == static_cast<int>(Color::black); });
 }
 
 bool image::column_empty(int column, int start, int end) const
 {
     auto column_it = cvit::column_iterator(*this, column);
-    return std::none_of(cvit::row_iterator(*column_it, start), cvit::row_iterator(*column_it, end), [](const auto& x) { return x(0,0) == (int)Color::black; });
+    return std::none_of(cvit::row_iterator(*column_it, start), cvit::row_iterator(*column_it, end),
+            [](const auto& x) { return x(0,0) == static_cast<unsigned char>(Color::black); });
 }
 
 void image::threshold(bool otsu)

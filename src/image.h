@@ -25,12 +25,12 @@ struct pixel {
     {
     }
 
-    bool operator==(const pixel& other) const
+    bool operator==(pixel other) const
     {
         return j == other.j && i == other.i;
     }
 
-    bool operator!=(const pixel& other) const
+    bool operator!=(pixel other) const
     {
         return !(*this == other);
     }
@@ -53,7 +53,7 @@ struct pixel {
 
     struct hash
     {
-      size_t operator()(const pixel& p) const
+      size_t operator()(pixel p) const
       {
         return std::hash<int>()(p.j) ^ (std::hash<int>()(p.i) << 1);
       }
@@ -72,7 +72,7 @@ struct borders {
     {
     }
 
-    void update(const pixel& p)
+    void update(pixel p)
     {
         // try to expande borders with new pixel
         m_left = std::min(p.i, m_left);
@@ -130,6 +130,7 @@ public:
     image(image&& other) = default;
     image& operator=(image&& img) = default;
     image(cv::Mat data);
+    ~image() = default;
 
     static image copy(const image& img)
     {
@@ -156,16 +157,23 @@ public:
     void show() const;
     void save(const fs::path& path) const;
 
-    int operator()(int j, int i) const;
-    int operator()(const pixel& p) const;
     unsigned char& operator()(int j, int i);
-    unsigned char& operator()(const pixel& p);
+    const unsigned char& operator()(int j, int i) const;
 
-    bool check_color(const pixel& p, Color color) const;
+    unsigned char& operator()(pixel p);
+    const unsigned char& operator()(pixel p) const;
 
-    bool in_range(const pixel& p) const;
+    unsigned char& color_at(int j, int i);
+    const unsigned char& color_at(int j, int i) const;
 
-    borders bfs(const pixel& p, std::unordered_set<pixel, pixel::hash>& visited) const;
+    unsigned char& color_at(pixel p);
+    const unsigned char& color_at(pixel p) const;
+
+    bool check_color(pixel p, Color color) const;
+
+    bool in_range(pixel p) const;
+
+    borders bfs(pixel p, std::unordered_set<pixel, pixel::hash>& visited) const;
 
     // width, height
     std::pair<int,int> get_component_avg_size_and_remove_noise();

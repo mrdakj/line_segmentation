@@ -13,7 +13,7 @@ bool contour::empty() const
     return m_path.empty();
 }
 
-const pixel& contour::last_pixel() const
+pixel contour::last_pixel() const
 {
     assert(!empty());
     return m_path.back();
@@ -21,7 +21,7 @@ const pixel& contour::last_pixel() const
 
 void contour::add(pixel p)
 {
-    m_path.push_back(std::move(p));
+    m_path.emplace_back(std::move(p));
 }
 
 void contour::add(contour other)
@@ -29,7 +29,7 @@ void contour::add(contour other)
     m_path.insert(m_path.end(), std::make_move_iterator(other.begin()), std::make_move_iterator(other.end()));
 }
 
-void contour::add_segment(const pixel& a, const pixel& b)
+void contour::add_segment(pixel a, pixel b)
 {
     // add segment [a, b] - it should be either horizontal or vertical segment
     assert(a.i == b.i || a.j == b.j);
@@ -161,7 +161,7 @@ std::vector<strip::rectangle> strip::get_rectangles(const image& img) const
 
     std::vector<strip::rectangle> rectangles;
     int top = 0;
-    Color color = (Color)img(0,0);
+    Color color = static_cast<Color>(img(0,0));
     for (int j = 1; j < height; ++j) {
         if (!img.check_color({j, 0}, color)) {
             rectangles.push_back({top, j, color});
@@ -196,19 +196,19 @@ const std::vector<strip::rectangle>& strip::rectangles() const
 bool strip::exists_black_rectangle(const strip::rectangle& r) const
 {
     auto column_it = cvit::column_iterator(m_image);
-    return std::any_of(cvit::row_iterator(*column_it, r.top()), cvit::row_iterator(*column_it, r.bottom()), [](const auto& x) { return x(0,0) == (int)Color::black; });
+    return std::any_of(cvit::row_iterator(*column_it, r.top()), cvit::row_iterator(*column_it, r.bottom()), [](const auto& x) { return x(0,0) == static_cast<unsigned char>(Color::black); });
 }
 
 bool strip::black_rectangle(const strip::rectangle& r) const
 {
     auto column_it = cvit::column_iterator(m_image);
-    return std::all_of(cvit::row_iterator(*column_it, r.top()), cvit::row_iterator(*column_it, r.bottom()), [](const auto& x) { return x(0,0) == (int)Color::black; });
+    return std::all_of(cvit::row_iterator(*column_it, r.top()), cvit::row_iterator(*column_it, r.bottom()), [](const auto& x) { return x(0,0) == static_cast<unsigned char>(Color::black); });
 }
 
 int strip::black_pixels_count(int start, int end) const
 {
     auto column_it = cvit::column_iterator(m_image);
-    return std::count_if(cvit::row_iterator(*column_it, start), cvit::row_iterator(*column_it, end), [](const auto& x) { return x(0,0) == (int)Color::black; });
+    return std::count_if(cvit::row_iterator(*column_it, start), cvit::row_iterator(*column_it, end), [](const auto& x) { return x(0,0) == static_cast<unsigned char>(Color::black); });
 }
 
 void strip::remove_rectangle_from_image(const strip::rectangle& r)
@@ -251,7 +251,7 @@ int strip::get_nearest_line(const std::vector<strip::rectangle>& rectangles, int
     return -1;
 }
 
-int strip::get_nearest_empty_line(const std::vector<strip::rectangle>& rectangles, const pixel& p, Direction dir) const
+int strip::get_nearest_empty_line(const std::vector<strip::rectangle>& rectangles, pixel p, Direction dir) const
 {
     int result = -1;
     for (const auto& r : rectangles) {
@@ -354,7 +354,7 @@ bool strip::operator!=(const strip& other) const
     return !(*this == other);
 }
 
-bool strip::in_range(const pixel& p) const
+bool strip::in_range(pixel p) const
 {
     return p.i >= left() && p.i < right() && p.j >= 0 && p.j < m_image.rows();
 }
@@ -471,20 +471,20 @@ bool strips::create_strips(int strip_width)
     int width = m_image.cols();
     m_strips.clear();
     // calculate strips width
-    int strips_count = std::ceil(width/(double)strip_width);
-    int strip_width_min = std::floor(width/(double)strips_count);
-    int strip_width_max = std::ceil(width/(double)strips_count);
+    int strips_count = std::ceil(width/static_cast<double>(strip_width));
+    int strip_width_min = std::floor(width/static_cast<double>(strips_count));
+    int strip_width_max = std::ceil(width/static_cast<double>(strips_count));
     int strips_count_max = width - strips_count*strip_width_min;
     int strips_count_min = strips_count - strips_count_max;
 
     // create strips
     for (int i = 0; i < strips_count_max; ++i) {
-        m_strips.push_back(strip(m_image, i*strip_width_max, (i+1)*strip_width_max));
+        m_strips.emplace_back(m_image, i*strip_width_max, (i+1)*strip_width_max);
     }
 
     int offset = strips_count_max*strip_width_max;
     for (int i = 0; i < strips_count_min; ++i) {
-        m_strips.push_back(strip(m_image, offset + i*strip_width_min, offset + (i+1)*strip_width_min));
+        m_strips.emplace_back(m_image, offset + i*strip_width_min, offset + (i+1)*strip_width_min);
     }
 
     assert(m_strips.back().right() == width);
@@ -493,12 +493,12 @@ bool strips::create_strips(int strip_width)
         int min_count = std::count_if(m_strips.begin(), m_strips.end(), [&](const auto& s) { return s.width() == strip_width_min; });
         assert(max_count == strips_count_max);
         assert(min_count == strips_count_min);
-        assert(max_count + min_count == (int)m_strips.size());
+        assert(max_count + min_count == static_cast<int>(m_strips.size()));
     }
     else 
     {
         int min_count = std::count_if(m_strips.begin(), m_strips.end(), [&](const auto& s) { return s.width() == strip_width_min; });
-        assert(min_count == (int)m_strips.size());
+        assert(min_count == static_cast<int>(m_strips.size()));
     }
 
     // add/remove black rectangles from strips
@@ -512,19 +512,19 @@ bool strips::create_strips(int strip_width)
         white_rectangles_with_lines_count += s.white_rectangles_with_lines_count();
     }
 
-    return white_rectangles_count > 0 && white_rectangles_with_lines_count/(double)white_rectangles_count >= 0.5;
+    return white_rectangles_count > 0 && white_rectangles_with_lines_count/static_cast<double>(white_rectangles_count) >= 0.5;
 }
 
 image strips::concatenate_strips() const
 {
     return std::accumulate(m_strips.begin(), m_strips.end(), image(m_image.rows(), 0), 
-            [](image r, const auto& s) { return std::move(r) + s.img(); });
+            [](image r, const auto& s) { return r + s.img(); });
 }
 
 image strips::concatenate_strips_with_lines(bool original) const
 {
     return std::accumulate(m_strips.begin(), m_strips.end(), image(m_image.rows(), 0), 
-            [&](image r, const auto& s) { return std::move(r) + s.image_with_lines(original); });
+            [&](image r, const auto& s) { return r + s.image_with_lines(original); });
 }
 
 strip& strips::get_core_strip()
@@ -580,7 +580,7 @@ void strips::connect()
     }
 }
 
-void strips::continue_path(const pixel& last_pixel, Direction dir)
+void strips::continue_path(pixel last_pixel, Direction dir)
 {
     assert(m_image.in_range(last_pixel));
 
@@ -638,7 +638,7 @@ std::vector<strip::rectangle> strips::get_rectangles_of_interest(
     return (last_rectangle.check_color(Color::white)) ?  std::vector{last_rectangle} : std::vector<strip::rectangle>{};
 }
 
-pixel strips::connect_with_existing_line(const pixel& last_pixel, Direction dir)
+pixel strips::connect_with_existing_line(pixel last_pixel, Direction dir)
 {
     // get next left or next right pixel
     auto next_pixel = last_pixel.next_pixel(dir);
@@ -675,7 +675,7 @@ pixel strips::connect_with_existing_line(const pixel& last_pixel, Direction dir)
     return last_pixel;
 }
 
-pixel strips::continue_with_strait_line(const pixel& last_pixel, Direction dir)
+pixel strips::continue_with_strait_line(pixel last_pixel, Direction dir)
 {
     // get next left or next right pixel
     auto next_pixel = last_pixel.next_pixel(dir);
@@ -697,9 +697,9 @@ pixel strips::continue_with_strait_line(const pixel& last_pixel, Direction dir)
 
 pixel strips::try_to_connect(
     const strip& last_strip,
-    const pixel& last_pixel,
+    pixel last_pixel,
     const strip& next_strip,
-    const pixel& next_pixel,
+    pixel next_pixel,
     int next_row,
     Direction dir)
 {
@@ -729,7 +729,7 @@ pixel strips::try_to_connect(
     return last_pixel;
 }
 
-pixel strips::go_around_and_cut(const pixel& last_pixel, Direction dir)
+pixel strips::go_around_and_cut(pixel last_pixel, Direction dir)
 {
     // get next left or next right pixel
     auto next_pixel = last_pixel.next_pixel(dir);
@@ -756,7 +756,7 @@ pixel strips::go_around_and_cut(const pixel& last_pixel, Direction dir)
     return m_candidate_path.last_pixel();
 }
 
-pixel strips::go_around_and_cut_helper(pixel& current_pixel, Direction dir)
+pixel strips::go_around_and_cut_helper(pixel current_pixel, Direction dir)
 {
     // current pixel is black and it is not in a candidate path
     
@@ -815,7 +815,7 @@ pixel strips::go_around_and_cut_helper(pixel& current_pixel, Direction dir)
     return m_candidate_path.last_pixel();
 }
 
-bool strips::bfs_go_around(const pixel& p, const std::unordered_set<pixel, pixel::hash>& candidates, Direction dir)
+bool strips::bfs_go_around(pixel p, const std::unordered_set<pixel, pixel::hash>& candidates, Direction dir)
 {
     // candidates are white pixels that are around component we hit, either below hitting point or above it
     
@@ -832,7 +832,7 @@ bool strips::bfs_go_around(const pixel& p, const std::unordered_set<pixel, pixel
     contour path;
     bool valid_path = false;
 
-    auto process_neighbour = [&](const pixel& current_pixel, int dj, int di) {
+    auto process_neighbour = [&](pixel current_pixel, int dj, int di) {
         pixel neighbour{current_pixel.j + dj, current_pixel.i + di};
         
         if (candidates.find(neighbour) != candidates.cend()) {
@@ -844,7 +844,7 @@ bool strips::bfs_go_around(const pixel& p, const std::unordered_set<pixel, pixel
         }
     };
 
-    auto stop_condition = [&](const pixel& current_pixel) {
+    auto stop_condition = [&](pixel current_pixel) {
         return // we reach the other side of the component at the same level of the hitting point
                (dir == Direction::right && current_pixel.j == p.j && current_pixel.i > p.i) ||
                (dir == Direction::left && current_pixel.j == p.j && current_pixel.i < p.i);
@@ -874,7 +874,7 @@ bool strips::bfs_go_around(const pixel& p, const std::unordered_set<pixel, pixel
     return true;
 }
 
-std::pair<borders, std::unordered_set<pixel, pixel::hash>> strips::bfs_get_box_and_candidates(const pixel& p, Direction dir) const
+std::pair<borders, std::unordered_set<pixel, pixel::hash>> strips::bfs_get_box_and_candidates(pixel p, Direction dir) const
 {
     // get bounding box of component (part of it) we hit, but only below or above the hitting point
     // if direction is down (up), top (bottom) border of the bounding box will be a row of the hitting point
@@ -940,19 +940,19 @@ image strips::result() const
     image result_img = image::copy(m_image);
 
     for (const auto& p : m_paths) {
-        result_img(p) = (int)Color::gray;
+        result_img(p) = static_cast<unsigned char>(Color::gray);
     }
 
     return result_img;
 }
 
-bool strips::should_be_deleted(int strip_index, const strip::rectangle& r) const
+bool strips::should_be_deleted(size_t strip_index, const strip::rectangle& r) const
 {
     return (r.check_color(Color::black) && r.height() < 5) && 
            // there is no black rectangle on the left
            (strip_index == 0 || !m_strips[strip_index-1].exists_black_rectangle(r)) &&
            // there is no black rectangle on the right
-           (strip_index == (int)m_strips.size()-1 || !m_strips[strip_index+1].exists_black_rectangle(r));
+           (strip_index == m_strips.size()-1 || !m_strips[strip_index+1].exists_black_rectangle(r));
 }
 
 void strips::delete_black_rectangles()
