@@ -759,6 +759,7 @@ pixel strips::go_around_and_cut(pixel last_pixel, Direction dir)
 pixel strips::go_around_and_cut_helper(pixel current_pixel, Direction dir)
 {
     // current pixel is black and it is not in a candidate path
+    auto box = bfs_get_box(current_pixel);
     
     // find bounding box and candidate pixels for path if we go down
     auto [border_down, candidates_down] = bfs_get_box_and_candidates(current_pixel, Direction::down);
@@ -792,7 +793,7 @@ pixel strips::go_around_and_cut_helper(pixel current_pixel, Direction dir)
         return false;
     };
 
-    bool path_found = (height_down <= height_up) ? 
+    bool path_found = (box.bottom() - current_pixel.j <= current_pixel.j - box.top()) ? 
                         // first try to find path going down and then going up
                         (try_to_find_path(Direction::down) || try_to_find_path(Direction::up)) :
                         // first try to find path going up and then going down
@@ -872,6 +873,40 @@ bool strips::bfs_go_around(pixel p, const std::unordered_set<pixel, pixel::hash>
 
     m_candidate_path.add(std::move(path));
     return true;
+}
+
+borders strips::bfs_get_box(pixel p) const
+{
+    // get bounding box of component (part of it) we hit
+    std::unordered_set<pixel, pixel::hash> visited;
+    std::queue<pixel> q;
+    q.push(p);
+    visited.insert(p);
+
+    // left, right, top, bottm
+    borders b{p.i, p.i, p.j, p.j};
+
+    while (!q.empty()) {
+        auto current_pixel = q.front();
+        q.pop();
+        b.update(current_pixel);
+
+        for (int dj : {-1, 0, 1}) {
+            for (int di : {-1, 0, 1}) {
+                pixel neighbour{current_pixel.j+dj, current_pixel.i+di};
+
+                if (m_image.check_color(neighbour, Color::black)) {
+                    if (visited.find(neighbour) == visited.cend()) {
+                        // if neighbour is black and not yet visited
+                        q.push(neighbour);
+                        visited.insert(std::move(neighbour));
+                    }
+                }
+            }
+        }
+    }
+
+    return b;
 }
 
 std::pair<borders, std::unordered_set<pixel, pixel::hash>> strips::bfs_get_box_and_candidates(pixel p, Direction dir) const

@@ -239,6 +239,7 @@ private:
     pixel go_around_and_cut(pixel last_pixel, Direction dir);
     pixel go_around_and_cut_helper(pixel current_pixel, Direction dir);
     bool bfs_go_around(pixel p, const std::unordered_set<pixel, pixel::hash>& candidates, Direction dir);
+    borders bfs_get_box(pixel p) const;
     std::pair<borders, std::unordered_set<pixel, pixel::hash>> bfs_get_box_and_candidates(pixel p, Direction dir) const;
 
 private:
