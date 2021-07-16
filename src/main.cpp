@@ -13,14 +13,19 @@ void process_image(const fs::path& img_name)
         auto strips_contour_original = s.concatenate_strips_with_lines(true);
         auto result_image = s.result();
 
+        // img.crop();
         // img.show();
         // cv::waitKey(0);
+        // img.save("1.png");
         // strips_image.show();
         // cv::waitKey(0);
+        // strips_image.save("2.png");
         // strips_contour.show();
         // cv::waitKey(0);
+        // strips_contour.save("3.png");
         // strips_contour_original.show();
         // cv::waitKey(0);
+        // strips_contour_original.save("4.png");
         // result_image.show();
         // cv::waitKey(0);
 
