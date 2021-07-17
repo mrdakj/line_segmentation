@@ -1016,7 +1016,7 @@ bool strips::should_be_added(size_t strip_index, size_t rectangle_index) const
            // it is the first or the last rectangle in the strip, or there is some small black rectangle above or below it
            (strip.top_rectangle(rectangle_index) || strip.above_rectangle(rectangle_index).height() < 5 || 
             strip.bottom_rectangle(rectangle_index) || strip.below_rectangle(rectangle_index).height() < 5) &&
-           // it is the first or the last strip, or there is a black rectange on the left or on the right
+           // it is bounded on both sides either by image boundary or by black rectangle
            (left_strip(strip_index) || next_left_strip(strip_index).black_rectangle(r)) &&
            (right_strip(strip_index) || next_right_strip(strip_index).black_rectangle(r));
 }
